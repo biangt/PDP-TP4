@@ -36,11 +36,11 @@ export function control(entrada: string): string {
 export function mostrarDificultad(dificultad: Dificultad): string {
     switch (dificultad) {
         case Dificultad.FACIL:
-            return "⭐ Fácil";
+            return "😎🟡🟡";
         case Dificultad.MEDIA:
-            return "⭐⭐ Media";
+            return "😐😐🟡";
         case Dificultad.DIFICIL:
-            return "⭐⭐⭐ Difícil";
+            return "😭😭😭";
         default:
             return "Desconocida";
     }
@@ -54,11 +54,11 @@ export function mostrarDificultad(dificultad: Dificultad): string {
 export function mostrarEstado(estado: Estado): string {
     switch (estado) {
         case Estado.PENDIENTE:
-            return "⏳ Pendiente";
+            return "Pendiente";
         case Estado.EN_CURSO:
-            return "🔄 En Curso";
+            return "En Curso";
         case Estado.TERMINADA:
-            return "✅ Terminada";
+            return "Terminada";
         default:
             return "Desconocido";
     }
