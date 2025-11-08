@@ -1,19 +1,17 @@
 import promptSync from 'prompt-sync';
 import { Tarea } from './tarea.js';
 import { Estado, TipoMensaje } from './types.js';
-import { detalleTarea } from './gestionTareas.js';
+import { detalleYEdicionTarea } from './gestionTareas.js';
 import { imprimir } from './utils.js';
 
 const prompt = promptSync({ sigint: true });
 
-
+// ============================================
 // FUNCIONES PURAS - Transformaciones de datos
+// ============================================
 
 /**
  * Agrega una tarea al arreglo de tareas de forma INMUTABLE.
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @param {Tarea} nuevaTarea - El objeto Tarea a agregar.
- * @returns {Tarea[]} Un NUEVO arreglo con la tarea agregada.
  */
 export function agregarTareaALista(tareas: Tarea[], nuevaTarea: Tarea): Tarea[] {
     return [...tareas, nuevaTarea];
@@ -21,9 +19,6 @@ export function agregarTareaALista(tareas: Tarea[], nuevaTarea: Tarea): Tarea[] 
 
 /**
  * Filtra tareas por estado (función pura).
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @param {Estado} estadoBuscado - El estado a filtrar.
- * @returns {Tarea[]} Un NUEVO arreglo con las tareas filtradas.
  */
 export function filtrarTareasPorEstado(tareas: Tarea[], estadoBuscado: Estado): Tarea[] {
     return tareas.filter(function(tarea) {
@@ -33,9 +28,6 @@ export function filtrarTareasPorEstado(tareas: Tarea[], estadoBuscado: Estado): 
 
 /**
  * Busca tareas que contengan un texto en su nombre (función pura).
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @param {string} textoBusqueda - El texto a buscar.
- * @returns {Tarea[]} Un NUEVO arreglo con las tareas que coinciden.
  */
 export function buscarTareasPorNombre(tareas: Tarea[], textoBusqueda: string): Tarea[] {
     const textoBusquedaLower = textoBusqueda.toLowerCase();
@@ -45,102 +37,89 @@ export function buscarTareasPorNombre(tareas: Tarea[], textoBusqueda: string): T
 }
 
 /**
- * Obtiene los índices originales de tareas filtradas (función pura).
- * @param {Tarea[]} tareasOriginales - El arreglo original.
- * @param {Tarea[]} tareasFiltradas - El arreglo filtrado.
- * @returns {number[]} Array con los índices originales.
+ * Reemplaza una tarea en el array original usando su ID (función pura).
+ * NUEVA: Esta función compone los cambios de vuelta al array original.
  */
-export function obtenerIndicesOriginales(tareasOriginales: Tarea[], tareasFiltradas: Tarea[]): number[] {
-    return tareasFiltradas.map(function(tareaFiltrada) {
-        return tareasOriginales.indexOf(tareaFiltrada);
+export function reemplazarTareaEnListaOriginal(
+    tareasOriginales: Tarea[], 
+    tareaEditada: Tarea
+): Tarea[] {
+    return tareasOriginales.map(function(tarea) {
+        return tarea.id === tareaEditada.id ? tareaEditada : tarea;
     });
 }
 
 /**
- * Obtiene las tareas filtradas por estado con sus índices originales (función pura).
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @param {Estado} estadoBuscado - El estado a filtrar.
- * @returns {{tareas: Tarea[], indicesOriginales: number[]} | null} Objeto con tareas e índices, o null si no hay resultados.
+ * Obtiene las tareas filtradas por estado (función pura).
  */
-export function obtenerTareasFiltradas(tareas: Tarea[], estadoBuscado: Estado): {tareas: Tarea[], indicesOriginales: number[]} | null {
+export function obtenerTareasFiltradas(
+    tareas: Tarea[], 
+    estadoBuscado: Estado
+): Tarea[] | null {
     const tareasFiltradas = filtrarTareasPorEstado(tareas, estadoBuscado);
-    
-    if (tareasFiltradas.length === 0) {
-        return null;
-    }
-    
-    const indicesOriginales = obtenerIndicesOriginales(tareas, tareasFiltradas);
-    return {
-        tareas: tareasFiltradas,
-        indicesOriginales: indicesOriginales
-    };
+    return tareasFiltradas.length === 0 ? null : tareasFiltradas;
 }
 
 /**
- * Busca tareas por nombre y obtiene sus índices originales (función pura).
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @param {string} textoBusqueda - El texto a buscar.
- * @returns {{tareas: Tarea[], indicesOriginales: number[]} | null} Objeto con tareas e índices, o null si no hay resultados.
+ * Busca tareas por nombre (función pura).
  */
-export function obtenerTareasEncontradas(tareas: Tarea[], textoBusqueda: string): {tareas: Tarea[], indicesOriginales: number[]} | null {
+export function obtenerTareasEncontradas(
+    tareas: Tarea[], 
+    textoBusqueda: string
+): Tarea[] | null {
     const tareasEncontradas = buscarTareasPorNombre(tareas, textoBusqueda);
-    
-    if (tareasEncontradas.length === 0) {
-        return null;
-    }
-    
-    const indicesOriginales = obtenerIndicesOriginales(tareas, tareasEncontradas);
-    return {
-        tareas: tareasEncontradas,
-        indicesOriginales: indicesOriginales
-    };
+    return tareasEncontradas.length === 0 ? null : tareasEncontradas;
 }
 
-// FUNCIONES IMPURAS - Visualización e interacción con el usuario
+// ============================================
+// FUNCIONES IMPURAS - Visualización e interacción
+// ============================================
 
 /**
  * Muestra las tareas filtradas por estado.
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @param {Estado} estadoBuscado - El estado a filtrar.
- * @returns {Tarea[]} El array de tareas (potencialmente modificado si se editó).
+ * MODIFICADA: Ahora retorna las tareas originales actualizadas.
  */
 export function verTareaFiltro(tareas: Tarea[], estadoBuscado: Estado): Tarea[] {
-    const resultado = obtenerTareasFiltradas(tareas, estadoBuscado);
+    const tareasFiltradas = obtenerTareasFiltradas(tareas, estadoBuscado);
     
-    if (resultado === null) {
+    if (tareasFiltradas === null) {
         imprimir(TipoMensaje.NO_HAY_TAREAS_ESTADO);
         imprimir(TipoMensaje.PRESIONE_ENTER);
         prompt("");
         return tareas;
-    } else {
-        imprimir(TipoMensaje.LISTA_TAREAS_FILTRADAS, resultado);
-        return detalleTarea(tareas);
     }
+    
+    // Mostrar solo las tareas filtradas
+    imprimir(TipoMensaje.LISTA_TAREAS, tareasFiltradas);
+    
+    // Permitir ver detalle SOLO de las tareas filtradas
+    const tareaEditadaONull = detalleYEdicionTarea(tareasFiltradas);
+    
+    // Si se editó una tarea, componerla de vuelta al array original
+    if (tareaEditadaONull !== null) {
+        return reemplazarTareaEnListaOriginal(tareas, tareaEditadaONull);
+    }
+    
+    return tareas;
 }
 
 /**
  * Busca y muestra tareas por nombre.
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @param {string} textoBusqueda - El texto a buscar.
  */
 export function buscarConIndexOf(tareas: Tarea[], textoBusqueda: string): void {
-    const resultado = obtenerTareasEncontradas(tareas, textoBusqueda);
+    const tareasEncontradas = obtenerTareasEncontradas(tareas, textoBusqueda);
     
-    if (resultado === null) {
+    if (tareasEncontradas === null) {
         imprimir(TipoMensaje.NO_SE_ENCONTRARON_TAREAS);
     } else {
-        imprimir(TipoMensaje.LISTA_TAREAS_FILTRADAS, resultado);
+        imprimir(TipoMensaje.LISTA_TAREAS, tareasEncontradas);
     }
 }
 
 /**
  * Maneja el menú de ver tareas con sus opciones.
- * @param {Tarea[]} tareas - El arreglo de tareas.
- * @returns {Tarea[]} El array de tareas (potencialmente modificado).
  */
 export function manejarVerTareas(tareas: Tarea[]): Tarea[] {
-    imprimir(TipoMensaje.MENU_VER_TAREAS, undefined, true);
-    
     if (tareas.length === 0) {
         imprimir(TipoMensaje.NO_HAY_TAREAS);
         imprimir(TipoMensaje.PRESIONE_ENTER);
@@ -148,13 +127,19 @@ export function manejarVerTareas(tareas: Tarea[]): Tarea[] {
         return tareas;
     }
     
+    imprimir(TipoMensaje.MENU_VER_TAREAS, undefined, true);
+    
     const entrada = prompt("Indique la opción: ");
     const opMenuInterno = parseInt(entrada);
     
     switch (opMenuInterno) {
-        case 1:
+        case 1: {
             imprimir(TipoMensaje.LISTA_TAREAS, tareas);
-            return detalleTarea(tareas);
+            const tareaEditadaONull = detalleYEdicionTarea(tareas);
+            return tareaEditadaONull !== null 
+                ? reemplazarTareaEnListaOriginal(tareas, tareaEditadaONull)
+                : tareas;
+        }
         case 2:
             return verTareaFiltro(tareas, Estado.PENDIENTE);
         case 3:
@@ -173,7 +158,6 @@ export function manejarVerTareas(tareas: Tarea[]): Tarea[] {
 
 /**
  * Maneja el proceso de búsqueda de tareas.
- * @param {Tarea[]} tareas - El arreglo de tareas.
  */
 export function manejarBuscarTareas(tareas: Tarea[]): void {
     console.clear();

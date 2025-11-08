@@ -136,6 +136,7 @@ export function obtenerMensaje(tipo: TipoMensaje, datos?: Tarea[] | {tareas: Tar
             return "No se encontraron tareas con ese nombre";
 
         case TipoMensaje.LISTA_TAREAS_FILTRADAS:
+            //preguntar por tipo datos
             if (datos && typeof datos === 'object' && 'tareas' in datos && 'indicesOriginales' in datos) {
                 const datosCompletos = datos as {tareas: Tarea[], indicesOriginales: number[]};
                 return datosCompletos.tareas.map((tarea: Tarea, i: number) => 

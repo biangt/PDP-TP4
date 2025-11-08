@@ -125,6 +125,7 @@ function obtenerMensaje(tipo, datos) {
         case types_js_1.TipoMensaje.NO_SE_ENCONTRARON_TAREAS:
             return "No se encontraron tareas con ese nombre";
         case types_js_1.TipoMensaje.LISTA_TAREAS_FILTRADAS:
+            //preguntar por tipo datos
             if (datos && typeof datos === 'object' && 'tareas' in datos && 'indicesOriginales' in datos) {
                 const datosCompletos = datos;
                 return datosCompletos.tareas.map((tarea, i) => `Tarea N° [${datosCompletos.indicesOriginales[i] + 1}]: ${tarea.nombre}`).join('\n');

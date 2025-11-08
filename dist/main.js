@@ -65,6 +65,7 @@ function ejecutarAccionSegunOpcion(opcion, tareas) {
  * Función principal del programa.
  */
 function main() {
+    //cambiar a const tareas = [] para evitar mutaciones dsp
     let tareas = [];
     let opcion = -1;
     while (opcion !== 0) {
